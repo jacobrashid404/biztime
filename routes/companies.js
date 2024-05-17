@@ -29,6 +29,7 @@ router.get("/:code", async function (req, res) {
     FROM companies
     WHERE code = $1`, [code]);
   const company = companyResults.rows[0];
+  if (!company) throw new NotFoundError("No matching company");
 
   const invoiceResults = await db.query(
     `SELECT id
@@ -36,8 +37,7 @@ router.get("/:code", async function (req, res) {
     WHERE comp_code = $1
     ORDER BY id`, [code]
   );
-  company.invoices = invoiceResults.rows.map(r => r.id);
-  if (!company) throw new NotFoundError("No matching company");
+  company.invoices = invoiceResults.rows.map(r => r.id); 
 
   return res.json({ company });
 });
