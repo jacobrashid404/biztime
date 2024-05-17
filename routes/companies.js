@@ -12,24 +12,33 @@ router.get("", async function (req, res) {
     FROM companies
     ORDER BY code`);
   const companies = results.rows;
-  
+
   return res.json({ companies });
 });
 
 
 /** Gets a company by code:
- *  Return 404 if company cant be found 
- *  Return obj of company: {company: {code, name, description}}
+ *  Return 404 if company can't be found 
+ *  Return obj of: 
+ *    {company: {code, name, description, invoices: [id, ...]}}
  */
 router.get("/:code", async function (req, res) {
   const code = req.params.code;
-  const results = await db.query(`
+  const companyResults = await db.query(`
     SELECT code, name, description
     FROM companies
     WHERE code = $1`, [code]);
-  const company = results.rows[0];
+  const company = companyResults.rows[0];
 
+  const invoiceResults = await db.query(
+    `SELECT id
+    FROM invoices
+    WHERE comp_code = $1
+    ORDER BY id`, [code]
+  );
+  company.invoices = invoiceResults.rows.map(r => r.id);
   if (!company) throw new NotFoundError("No matching company");
+
   return res.json({ company });
 });
 
@@ -41,10 +50,10 @@ router.get("/:code", async function (req, res) {
  */
 router.post("", async function (req, res) {
   if (!req.body) throw new BadRequestError();
-  
+
   //NOTE: consider generating code based on name input instead of letting the user set it themselves
   //since its a primary key it should be "sluggified" (all lowercase, spaces replaced with hyphens) 
-  
+
   // handles missing required inputs
   if (!req.body.code || !req.body.name || !req.body.description) {
     throw new BadRequestError("Missing data. Need code, name and description.");
@@ -56,8 +65,8 @@ router.post("", async function (req, res) {
     VALUES ($1, $2, $3) RETURNING code, name, description`,
     [code, name, description],
   );
-
   const company = result.rows[0];
+
   return res.status(201).json({ company });
 });
 
@@ -83,8 +92,8 @@ router.put("/:code", async function (req, res) {
     [req.body.name, req.body.description, code]
   );
   const company = results.rows[0];
-
   if (!company) throw new NotFoundError(`No matching company: ${code}`);
+
   return res.json({ company });
 });
 
@@ -103,7 +112,6 @@ router.delete("/:code", async function (req, res) {
     [code],
   );
   const company = results.rows[0];
-
   if (!company) throw new NotFoundError(`No matching company ${code}`);
 
   return res.json({ status: "deleted" });

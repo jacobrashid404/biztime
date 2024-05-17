@@ -120,7 +120,6 @@ router.put("/:id", async function (req, res) {
  */
 router.delete("/:id", async function (req, res) {
   const id = req.params.id;
-  console.log("id", id);
 
   const results = await db.query(`
     DELETE FROM invoices 
@@ -128,8 +127,6 @@ router.delete("/:id", async function (req, res) {
     [id],
   );
   const invoice = results.rows[0];
-  console.log("invoice", invoice);
-
   if (!invoice) throw new NotFoundError(`No matching invoice ${id}`);
 
   return res.json({ status: "deleted" });  
