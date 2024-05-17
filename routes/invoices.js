@@ -27,6 +27,7 @@ router.get("/", async function (req, res) {
  * } */
 router.get("/:id", async function (req, res) {
   const id = req.params.id;
+  //NOTE: could use only one query in this route
 
   // include comp_code in invoice query for later company query
   // comp_code key will be removed before final return
@@ -71,6 +72,7 @@ router.post("/", async function (req, res) {
   if (!req.body.comp_code || !req.body.amt) {
     throw new BadRequestError("Invalid JSON body. Missing required data.");
   }
+  //TODO: check if amount can be converted to number 
 
   const { comp_code, amt } = req.body;
 
@@ -98,6 +100,7 @@ router.put("/:id", async function (req, res) {
   if (!req.body.amt) {
     throw new BadRequestError("Missing data. Need amt.");
   }
+  //TODO: check if amount can be converted to number
 
   const id = req.params.id;
   const results = await db.query(`
